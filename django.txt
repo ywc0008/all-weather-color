@@ -1,0 +1,112 @@
+[앱 만들기]
+django-admin startapp 앱이름
+
+source /home/master/venvs/mysite/bin/activate
+python3 manage.py createsuperuser
+python3 manage.py changepassword <유저이름>
+-----------------------------------------
+apt -y install vsftpd
+nano /etc/vsftpd.conf
+write_enable=YES(주석해제)
+-----------------------------------------
+apt-get install -y openssh-server
+apt install unzip
+sudo apt-get install -y lrzsz
+sudo apt-get install -y python3==3.10.6
+python3 --version
+sudo apt-get install -y python3-pip
+
+sudo apt-get install -y python3.10-venv
+cd /home/master
+mkdir venvs
+cd venvs
+python3 -m venv mysite
+source /home/master/venvs/mysite/bin/activate
+
+sudo apt-get install -y mysql-server
+sudo apt-get install libmysqlclient-dev
+sudo apt-get install -y mysql-client
+mysql -uroot
+alter user 'root'@'localhost' identified with mysql_native_password by '123456';
+create user 'django'@'localhost' identified with mysql_native_password by '123456';
+create database django;
+mysql -uroot -p123456;
+systemctl start mysql
+grant all on django.* to django@localhost;
+flush privileges;
+
+cd /home/master
+mkdir projects
+cd projects
+rz
+unzip mysite.zip
+source /home/master/venvs/mysite/bin/activate
+pip3 install django==4.1
+export DJANGO_SETTINGS_MODULE=config.settings.prod
+source /home/master/venvs/mysite/bin/activate
+export DJANGO_SETTINGS_MODULE=config.settings.prod
+python3 /home/master/projects/mysite/manage.py runserver 0.0.0.0:8000 --settings=config.settings.prod
+python3 /home/master/projects/mysite/manage.py migrate
+python3 /home/master/projects/mysite/manage.py makemigrations
+python3 /home/master/projects/mysite/manage.py migrate
+
+source /home/master/venvs/mysite/bin/activate
+python3 /home/master/projects/mysite/manage.py runserver 0.0.0.0:8000 --settings=config.settings.prod
+
+---------------------------------
+
+pip install gunicorn
+gunicorn --bind unix:/tmp/gunicorn.sock config.wsgi:application
+
+nano /home/master/venvs/mysite.env
+DJANGO_SETTINGS_MODULE=config.settings.prod
+
+nano /etc/systemd/system/mysite.service
+[Unit]
+Description=gunicorn daemon
+After=network.target
+[Service]
+User=master
+Group=master
+WorkingDirectory=/home/master/projects/mysite
+EnvironmentFile=/home/master/venvs/mysite.env
+ExecStart=/home/master/venvs/mysite/bin/gunicorn \
+--workers 2 \
+--bind unix:/tmp/gunicorn.sock \
+config.wsgi:application
+[Install]
+WantedBy=multi-user.target
+
+cd /etc/systemd/system
+sudo systemctl restart mysite.service
+sudo systemctl enable mysite.service
+
+---------------------------------------------------
+source /home/master/venvs/mysite/bin/activate
+sudo apt-get install -y nginx
+cd /etc/nginx/sites-available
+
+nano mysite
+server {
+listen 80;
+server_name 192.168.0.2;
+location = /favicon.ico {
+access_log off; log_not_found off;
+}
+location /static {
+alias /home/master/mysite/static;
+}
+location / {
+include proxy_params;
+proxy_pass http://unix:/tmp/gunicorn.sock;
+}
+}
+
+cd /etc/nginx/sites-enabled
+(ls → default가 있을 경우) sudo rm -rf default
+sudo ln -s /etc/nginx/sites-available/mysite
+ls # → mysite 생성됨
+sudo systemctl restart nginx
+
+cd /etc/systemd/system
+sudo systemctl restart mysite.service
