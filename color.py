@@ -14,7 +14,7 @@ print(image.shape)
 k = 5 # 예제는 5개로 나누겠습니다
 clt = KMeans(n_clusters = k)
 clt.fit(image)
-
+ㅣㅏㅓㅇㄴ마ㅣ러ㅏㅣㄴㅁ얼
 for center in clt.cluster_centers_:
     print(center)
 
