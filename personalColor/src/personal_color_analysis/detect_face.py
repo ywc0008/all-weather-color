@@ -10,8 +10,6 @@ class DetectFace:
     def __init__(self, image):
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor('../res/shape_predictor_68_face_landmarks.dat')
-
-        #face detection part
         self.img = cv2.imread(image)
 
         self.right_eyebrow = []
@@ -24,7 +22,6 @@ class DetectFace:
         self.detect_face_part()
 
 
-    # return type : np.array
     def detect_face_part(self):
         face_parts = [[],[],[],[],[],[],[]]
         rect = self.detector(cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY), 1)[0]
@@ -44,18 +41,12 @@ class DetectFace:
         self.left_eyebrow = self.extract_face_part(face_parts[1])
         self.right_eye = self.extract_face_part(face_parts[2])
         self.left_eye = self.extract_face_part(face_parts[3])
-        # Cheeks are detected by relative position to the face landmarks
         self.left_cheek = self.img[shape[29][1]:shape[33][1], shape[4][0]:shape[48][0]]
         self.right_cheek = self.img[shape[29][1]:shape[33][1], shape[54][0]:shape[12][0]]
-
-    # parameter example : self.right_eye
-    # return type : image
     def extract_face_part(self, face_part_points):
         (x, y, w, h) = cv2.boundingRect(face_part_points)
         crop = self.img[y:y+h, x:x+w]
         adj_points = np.array([np.array([p[0]-x, p[1]-y]) for p in face_part_points])
-
-        # Create an mask
         mask = np.zeros((crop.shape[0], crop.shape[1]))
         cv2.fillConvexPoly(mask, adj_points, 1)
         mask = mask.astype(np.bool)
