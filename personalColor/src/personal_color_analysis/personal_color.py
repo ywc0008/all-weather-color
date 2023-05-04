@@ -10,23 +10,15 @@ from django.conf import settings
 
 
 def analysis(imgpath):
-    #######################################
-    #           Face detection            #
-    #######################################
     df = DetectFace(imgpath)
     face = [df.left_cheek, df.right_cheek,
             df.left_eyebrow, df.right_eyebrow,
             df.left_eye, df.right_eye]
-
-    #######################################
-    #         Get Dominant Colors         #
-    #######################################
     temp = []
     clusters = 4
     for f in face:
         dc = DominantColors(f, clusters)
         face_part_color, _ = dc.getHistogram()
-        #dc.plotHistogram()
         temp.append(np.array(face_part_color[0]))
     cheek = np.mean([temp[0], temp[1]], axis=0)
     eyebrow = np.mean([temp[2], temp[3]], axis=0)
@@ -43,9 +35,6 @@ def analysis(imgpath):
 
     print('Lab_b[skin, eyebrow, eye]',Lab_b)
     print('hsv_s[skin, eyebrow, eye]',hsv_s)
-    #######################################
-    #      Personal color Analysis        #
-    #######################################
     Lab_weight = [30, 20, 5]
     hsv_weight = [10, 1, 1]
     if(tone_analysis.is_warm(Lab_b, Lab_weight)):
@@ -58,5 +47,4 @@ def analysis(imgpath):
             tone = '여름쿨톤(summer)'
         else:
             tone = '겨울쿨톤(winter)'
-    # Print Result
     print('{}의 퍼스널 컬러는 {}입니다.'.format(imgpath, tone))
