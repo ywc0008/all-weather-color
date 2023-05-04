@@ -8,17 +8,12 @@ import matplotlib.pyplot as plt
 
 class DetectFace:
     def __init__(self, image):
-        # initialize dlib's face detector (HOG-based)
-        # and then create the facial landmark predictor
         self.detector = dlib.get_frontal_face_detector()
         self.predictor = dlib.shape_predictor('../res/shape_predictor_68_face_landmarks.dat')
 
         #face detection part
         self.img = cv2.imread(image)
-        #if self.img.shape[0]>500:
-        #    self.img = cv2.resize(self.img, dsize=(0,0), fx=0.8, fy=0.8)
 
-        # init face parts
         self.right_eyebrow = []
         self.left_eyebrow = []
         self.right_eye = []
@@ -26,23 +21,17 @@ class DetectFace:
         self.left_cheek = []
         self.right_cheek = []
 
-        # detect the face parts and set the variables
         self.detect_face_part()
 
 
     # return type : np.array
     def detect_face_part(self):
         face_parts = [[],[],[],[],[],[],[]]
-        # detect faces in the grayscale image
         rect = self.detector(cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY), 1)[0]
-
-        # determine the facial landmarks for the face region, then
-        # convert the landmark (x, y)-coordinates to a NumPy array
         shape = self.predictor(cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY), rect)
         shape = face_utils.shape_to_np(shape)
 
         idx = 0
-        # loop over the face parts individually
         for (name, (i, j)) in face_utils.FACIAL_LANDMARKS_IDXS.items():
             if idx < len(face_parts):
                 face_parts[idx] = shape[i:j]
@@ -51,11 +40,7 @@ class DetectFace:
                 break
             
         face_parts = face_parts[1:5]
-        # set the variables
-        # Caution: this coordinates fits on the RESIZED image.
         self.right_eyebrow = self.extract_face_part(face_parts[0])
-        #cv2.imshow("right_eyebrow", self.right_eyebrow)
-        #cv2.waitKey(0)
         self.left_eyebrow = self.extract_face_part(face_parts[1])
         self.right_eye = self.extract_face_part(face_parts[2])
         self.left_eye = self.extract_face_part(face_parts[3])
